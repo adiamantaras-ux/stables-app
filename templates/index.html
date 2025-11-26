@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="el">
+<head><title>Στάβλοι</title></head>
+<body>
+<h1>Διαθέσιμοι Αγώνες</h1>
+<ul>
+{% for event in events %}
+<li><a href="/event/{{ event[1] }}">{{ event[1] }}</a></li>
+{% endfor %}
+</ul>
+<a href="/admin/create_event">Admin: Νέος Αγώνας</a>
+</body>
+</html>

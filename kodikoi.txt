@@ -1,0 +1,2 @@
+app.secret_key = 'HEF_admin'  # 
+ADMIN_PASSWORD = 'stable_evi'  #
