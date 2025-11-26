@@ -1,3 +1,4 @@
+# FINAL VERSION – 26 Nov 2025 – openpyxl fixed
 from flask import Flask, render_template, request, redirect, url_for, send_file, flash
 import sqlite3
 import os
