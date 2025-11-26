@@ -67,7 +67,12 @@ def event(event_name):
 
     # Δημιουργία grid 56×61
     grid = [['' for _ in range(61)] for _ in range(56)]
-    for stall, (r, c) in STALL_POSITIONS.items():
+    
+    
+    for i, stall in enumerate(STALLS):
+    r = i // 15 + 1
+    c = i % 15 + 1
+    
         r_idx, c_idx = r-1, c-1
         if stall in reservations:
             grid[r_idx][c_idx] = f"{reservations[stall]} (Κλεισμένο)"
