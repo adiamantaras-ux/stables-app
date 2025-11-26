@@ -70,8 +70,8 @@ def event(event_name):
     
     
     for i, stall in enumerate(STALLS):
-    r = i // 15 + 1
-    c = i % 15 + 1
+        r = i // 15 + 1
+        c = i % 15 + 1
     
         r_idx, c_idx = r-1, c-1
         if stall in reservations:
