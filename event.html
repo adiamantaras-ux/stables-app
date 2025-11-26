@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<title>{{ event_name }}</title>
+<style>
+table { border-collapse: collapse; font-size: 10px; }
+td { border: 1px solid #ccc; padding: 8px; width: 70px; height: 35px; text-align: center; vertical-align: middle; }
+.free { background: #90EE90; cursor: pointer; }
+.booked { background: #FFB6C1; }
+.empty { border: none; background: white; }
+.autocomplete { position: relative; display: inline-block; }
+.autocomplete-items { position: absolute; border: 1px solid #d4d4d4; border-top: none; max-height: 150px; overflow-y: auto; z-index: 99; background-color: white; }
+.autocomplete-items div { padding: 10px; cursor: pointer; }
+.autocomplete-items div:hover { background-color: #f2f2f2; }
+</style>
+</head>
+<body>
+<h1>Στάβλοι – {{ event_name }}</h1>
+<table>
+{% for row in grid %}
+<tr>
+{% for cell in row %}
+{% if cell %}
+<td class="{% if '(Κλεισμένο)' in cell %}booked{% else %}free{% endif %}">
+{% if '(Κλεισμένο)' in cell %}
+{{ cell }}
+{% else %}
+<form method="POST" action="/reserve/{{ event_name }}">
+<input type="hidden" name="stall_id" value="{{ cell }}">
+<div class="autocomplete">
+<strong>{{ cell }}</strong><br>
+<input type="text" name="user_name" placeholder="Όνομα Αθλητή" id="athlet" required>
+<div id="athlet-autocomplete-list" class="autocomplete-items"></div>
+</div>
+<div class="autocomplete">
+<input type="text" name="horse_name" placeholder="Όνομα Αλόγου" id="horse" required>
+<div id="horse-autocomplete-list" class="autocomplete-items"></div>
+</div>
+<button type="submit" style="font-size:9px">ΚΛΕΙΣΕ</button>
+</form>
+{% endif %}
+</td>
+{% else %}
+<td class="empty"></td>
+{% endif %}
+{% endfor %}
+</tr>
+{% endfor %}
+</table>
+<br><br>
+<form method="POST" action="/admin/download/{{ event_name }}">
+<input type="password" name="password" placeholder="Admin Password" required>
+<button type="submit">Κατέβασε Excel Χρέωσης</button>
+</form>
+<br>
+<a href="/">Πίσω</a>
+<script>
+const ATHLETS = {{ athlets_json | safe }};  // θα το προσθέσω στο render_template
+const HORSES = {{ horses_json | safe }};
+function autocomplete(inp, arr, listId) {
+  inp.addEventListener("input", function(e) {
+    var val = this.value.toLowerCase();
+    closeAllLists();
+    if (!val) return false;
+    var a = document.getElementById(listId);
+    a.innerHTML = '';
+    for (var i = 0; i < arr.length; i++) {
+      if (arr[i].toLowerCase().indexOf(val) > -1) {
+        var b = document.createElement("DIV");
+        b.innerHTML = arr[i];
+        b.addEventListener("click", function(e) {
+          inp.value = this.innerHTML;
+          closeAllLists();
+        });
+        a.appendChild(b);
+      }
+    }
+  });
+}
+function closeAllLists() {
+  var x = document.getElementsByClassName("autocomplete-items");
+  for (var i = 0; i < x.length; i++) {
+    x[i].innerHTML = '';
+  }
+}
+document.addEventListener("click", function (e) {
+  closeAllLists(e.target);
+});
+autocomplete(document.getElementById("athlet"), ATHLETS, "athlet-autocomplete-list");
+autocomplete(document.getElementById("horse"), HORSES, "horse-autocomplete-list");
+</script>
+</body>
+</html>
