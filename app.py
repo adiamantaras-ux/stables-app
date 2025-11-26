@@ -1,19 +1,16 @@
-from flask import Flask, render_template, request, redirect, url_for, send_file, session
+from flask import Flask, render_template, request, redirect, url_for, send_file, flash
 import sqlite3
 import csv
 import io
 from datetime import datetime
-
-app = Flask(__name__)
-import os 
+import os
 from threading import Thread
 
-# ==== ΑΛΛΑΞΕ ΜΟΝΟ ΑΥΤΕΣ ΤΙΣ 2 ΓΡΑΜΜΕΣ ====
-app.secret_key = 'HEF_admin'   # ← άλλαξε το σε κάτι δικό σου (ό,τι θέλεις)
-ADMIN_PASSWORD = 'stable_evi'                        # ← αυτό είναι το password σου για admin
-# ==========================================
+app = Flask(__name__)
+app.secret_key = 'HEF_admin_2025_super_secret'  # άλλαξε αν θες
+ADMIN_PASSWORD = 'stable_evi'  # το password σου για admin
 
-# Όλα τα stalls (δεν χρειάζεται να αλλάξεις τίποτα εδώ)
+# Όλοι οι στάβλοι (σωστά σε λίστα)
 STALLS = [
     "5Β1","5Β2","5Β3","5Β4","5Β5","5Β6","5Β7","5Β8","5Β9","5Β10","5Β11","5Β12","5Β13","5Β14","5Β15",
     "5Α1","5Α2","5Α3","5Α4","5Α5","5Α6","5Α7","5Α8","5Α9","5Α10","5Α11","5Α12","5Α13","5Α14","5Α15",
@@ -35,20 +32,18 @@ STALLS = [
     "1B1","1B2","1B3","1B4","1B5","1B6","1B7","1B8","1B9","1B10","1B11","1B12","1B13","1B14","1B15"
 ]
 
-# Θέση κάθε σταβλου στο grid (μην το πειράξεις)
-STALL_POSITIONS = { ... }   # (ο κώδικας είναι ίδιος με πριν – πολύ μεγάλος για εδώ, απλά κράτα όλο το αρχείο όπως στο προηγούμενο μήνυμα)
-
-# Από εδώ και κάτω δεν αλλάζεις ΤΙΠΟΤΑ
+# Σύνδεση με βάση (σημαντικό για Render)
 def get_db():
-    conn = sqlite3.connect('stables.db')
+    conn = sqlite3.connect('stables.db', check_same_thread=False)
     conn.row_factory = sqlite3.Row
     return conn
 
+# Δημιουργία πινάκων (μία φορά)
 with get_db() as conn:
-    conn.execute('''CREATE TABLE IF NOT EXISTS events 
+    conn.execute('''CREATE TABLE IF NOT EXISTS events
                     (id INTEGER PRIMARY KEY, name TEXT UNIQUE, created_at TEXT)''')
-    conn.execute('''CREATE TABLE IF NOT EXISTS reservations 
-                    (event_id INTEGER, stall_id TEXT, user_name TEXT, 
+    conn.execute('''CREATE TABLE IF NOT EXISTS reservations
+                    (event_id INTEGER, stall_id TEXT, user_name TEXT,
                      UNIQUE(event_id, stall_id))''')
 
 @app.route('/')
@@ -61,19 +56,19 @@ def index():
 def event(event_name):
     with get_db() as conn:
         event = conn.execute('SELECT id FROM events WHERE name = ?', (event_name,)).fetchone()
-        if not event: return "Δεν βρέθηκε ο αγώνας", 404
-        event_id = event[0]
+        if not event:
+            return "Δεν βρέθηκε ο αγώνας", 404
+        event_id = event['id']
         reservations = dict(conn.execute('SELECT stall_id, user_name FROM reservations WHERE event_id = ?', (event_id,)).fetchall())
 
-    # Δημιουργία grid 56×61
+    # Grid 56×61
     grid = [['' for _ in range(61)] for _ in range(56)]
-    
-    
+
     for i, stall in enumerate(STALLS):
         r = i // 15 + 1
         c = i % 15 + 1
-    
-        r_idx, c_idx = r-1, c-1
+        r_idx, c_idx = r - 1, c - 1
+
         if stall in reservations:
             grid[r_idx][c_idx] = f"{reservations[stall]} (Κλεισμένο)"
         else:
@@ -85,61 +80,71 @@ def event(event_name):
 def reserve(event_name):
     stall_id = request.form['stall_id']
     user_name = request.form['user_name'].strip()
-    if not user_name: return "Πρέπει να βάλεις όνομα!", 400
+    if not user_name:
+        flash("Πρέπει να βάλεις όνομα!")
+        return redirect(url_for('event', event_name=event_name))
 
     with get_db() as conn:
         event = conn.execute('SELECT id FROM events WHERE name = ?', (event_name,)).fetchone()
-        if not event: return "Δεν βρέθηκε ο αγώνας", 404
-        event_id = event[0]
-
+        if not event:
+            return "Δεν βρέθηκε ο αγώνας", 404
+        event_id = event['id']
         try:
             conn.execute('INSERT INTO reservations (event_id, stall_id, user_name) VALUES (?, ?, ?)',
                         (event_id, stall_id, user_name))
             conn.commit()
+            flash(f"Ο στάβλος {stall_id} κλείστηκε επιτυχώς!")
         except sqlite3.IntegrityError:
-            return "Αυτός ο στάβλος είναι ήδη κλεισμένος!", 400
-
+            flash("Αυτός ο στάβλος είναι ήδη κλεισμένος!")
     return redirect(url_for('event', event_name=event_name))
 
 @app.route('/admin/create_event', methods=['GET', 'POST'])
 def create_event():
     if request.method == 'POST':
         if request.form['password'] != ADMIN_PASSWORD:
-            return "Λάθος password!", 403
+            flash("Λάθος password!")
+            return redirect(url_for('create_event'))
         name = request.form['event_name'].strip()
+        if not name:
+            flash("Βάλε όνομα αγώνα!")
+            return redirect(url_for('create_event'))
         with get_db() as conn:
             try:
                 conn.execute('INSERT INTO events (name, created_at) VALUES (?, ?)',
                             (name, datetime.now().strftime('%Y-%m-%d %H:%M')))
                 conn.commit()
+                flash(f"Δημιουργήθηκε ο αγώνας: {name}")
             except sqlite3.IntegrityError:
-                return "Υπάρχει ήδη αγώνας με αυτό το όνομα!", 400
+                flash("Υπάρχει ήδη αγώνας με αυτό το όνομα!")
         return redirect('/')
     return render_template('admin_create.html')
 
 @app.route('/admin/download/<event_name>', methods=['POST'])
 def download(event_name):
     if request.form['password'] != ADMIN_PASSWORD:
-        return "Λάθος password!", 403
+        flash("Λάθος password!")
+        return redirect(url_for('event', event_name=event_name))
 
     with get_db() as conn:
         event = conn.execute('SELECT id FROM events WHERE name = ?', (event_name,)).fetchone()
-        if not event: return "Δεν βρέθηκε ο αγώνας", 404
-        rows = conn.execute('SELECT stall_id, user_name FROM reservations WHERE event_id = ? ORDER BY stall_id', (event[0],)).fetchall()
+        if not event:
+            return "Δεν βρέθηκε ο αγώνας", 404
+        rows = conn.execute('SELECT stall_id, user_name FROM reservations WHERE event_id = ? ORDER BY stall_id', (event['id'],)).fetchall()
 
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow(['Στάβλος', 'Όνομα'])
-    for r in rows:
-        writer.writerow(r)
-
+    for row in rows:
+        writer.writerow([row['stall_id'], row['user_name']])
     output.seek(0)
-    return send_file(io.BytesIO(output.getvalue().encode('utf-8')),
-                     mimetype='text/csv',
-                     as_attachment=True,
-                     download_name=f'{event_name}_κρατήσεις.csv')
+
+    return send_file(
+        io.BytesIO(output.getvalue().encode('utf-8')),
+        mimetype='text/csv',
+        as_attachment=True,
+        download_name=f'{event_name}_κρατήσεις.csv'
+    )
 
 if __name__ == '__main__':
-    import os
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
