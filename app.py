@@ -80,6 +80,27 @@ with get_db() as conn:
 @app.route('/admin/update_lists', methods=['GET', 'POST'])
 def update_lists():
     if request.method == 'POST':
+        password = request.form.get('password', '')
+        if password != ADMIN_PASSWORD:
+            flash("Λάθος password!")
+            return redirect(url_for('update_lists'))
+        
+        global ATHLETES, HORSES
+        ATHLETES = load_athletes()
+        HORSES = load_horses()
+        flash(f"Επιτυχής ενημέρωση! {len(ATHLETES)} αθλητές – {len(HORSES)} άλογα")
+        return redirect('/')
+    
+    return '''
+    <h1>Admin – Ανανέωση Λιστών από Excel</h1>
+    <form method="post">
+        <p>Password: <input type="password" name="password" placeholder="stable_evi" required></p>
+        <p><button type="submit" style="padding:15px; font-size:16px; background:green; color:white;">ΕΝΗΜΕΡΩΣΗ ΛΙΣΤΩΝ</button></p>
+    </form>
+    <p><a href="/">← Πίσω στην αρχική</a></p>
+    '''
+def update_lists():
+    if request.method == 'POST':
         if request.form.get('password') != ADMIN_PASSWORD:
             flash("Λάθος password!")
             return redirect(url_for('update_lists'))
