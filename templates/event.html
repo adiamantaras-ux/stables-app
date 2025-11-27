@@ -1,46 +1,65 @@
 <!DOCTYPE html>
-<html lang="el">
-<head><title>{{ event_name }}</title>
-<style>
-table { border-collapse: collapse; font-size: 10px; }
-td { border: 1px solid #ccc; padding: 8px; width: 70px; height: 35px; text-align: center; vertical-align: middle; }
-.free { background: #90EE90; cursor: pointer; }
-.booked { background: #FFB6C1; }
-.empty { border: none; background: white; }
-</style>
+<html>
+<head>
+    <title>{{ event_name }}</title>
+    <meta charset="utf-8">
+    <style>
+        table { border-collapse: collapse; font-family: Arial; margin: 20px; }
+        td { width: 90px; height: 70px; text-align: center; vertical-align: top; font-size: 11px; padding: 5px; border: 1px solid #ccc; }
+        .available { background: #90ee90; cursor: pointer; }
+        .reserved { background: #ff4444; color: white; font-weight: bold; }
+        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: white; padding: 30px; border: 4px solid #000; z-index: 100; width: 400px; }
+        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 99; }
+        button { padding: 15px 30px; font-size: 18px; margin: 10px; }
+    </style>
 </head>
 <body>
-<h1>Στάβλοι – {{ event_name }}</h1>
-<table>
-{% for row in grid %}
-<tr>
-{% for cell in row %}
-{% if cell %}
-<td class="{% if '(Κλεισμένο)' in cell %}booked{% else %}free{% endif %}">
-{% if '(Κλεισμένο)' not in cell %}
-<form method="POST" action="/reserve/{{ event_name }}">
-<input type="hidden" name="stall_id" value="{{ cell }}">
-<strong>{{ cell }}</strong><br>
-<input type="text" name="user_name" placeholder="Όνομά σου" size="10" required>
-<button type="submit" style="font-size:9px">ΚΛΕΙΣΕ</button>
-</form>
-{% else %}
-{{ cell }}
-{% endif %}
-</td>
-{% else %}
-<td class="empty"></td>
-{% endif %}
-{% endfor %}
-</tr>
-{% endfor %}
-</table>
-<br><br>
-<form method="POST" action="/admin/download/{{ event_name }}">
-<input type="password" name="password" placeholder="Admin password" required>
-<button type="submit">Κατέβασε CSV με κρατήσεις</button>
-</form>
-<br>
-<a href="/">Πίσω στην αρχική</a>
+    <h1>Στάβλοι – {{ event_name }}</h1>
+    <table>
+        {% for row in grid %}
+        <tr>
+            {% for cell in row %}
+                {% if cell %}
+                    {% if '<br>' in cell %}
+                        <td class="reserved"><b>{{ cell.split('<br>')[0] }}</b><br><small>{{ cell.split('<br>')[1] }}</small></td>
+                    {% else %}
+                        <td class="available" onclick="openModal('{{ cell }}')">{{ cell }}<br><small>Κάνε κλικ<br>για κράτηση</small></td>
+                    {% endif %}
+                {% else %}
+                    <td></td>
+                {% endif %}
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </table>
+
+    <div class="overlay" id="overlay" onclick="closeModal()"></div>
+    <div class="modal" id="modal">
+        <h2>Κράτηση στάβλου: <span id="stall_id"></span></h2>
+        <form method="post" action="/reserve/{{ event_name }}">
+            <input type="hidden" name="stall" id="stall_input">
+            <p>Αθλητής:<br>
+            <input type="text" name="athlete" list="athletes" required style="width:100%;padding:10px;font-size:16px">
+            <datalist id="athletes">{% for a in athletes %}<option value="{{ a }}">{% endfor %}</datalist></p>
+            <p>Άλογο:<br>
+            <input type="text" name="horse" list="horses" required style="width:100%;padding:10px;font-size:16px">
+            <datalist id="horses">{% for h in horses %}<option value="{{ h }}">{% endfor %}</datalist></p>
+            <button type="submit" style="background:#d00;color:white">ΚΛΕΙΣΕ ΤΟΝ ΣΤΑΒΛΟ</button>
+        </form>
+        <button onclick="closeModal()" style="background:#666;color:white">Άκυρο</button>
+    </div>
+
+    <script>
+        function openModal(stall) {
+            document.getElementById('stall_id').textContent = stall;
+            document.getElementById('stall_input').value = stall;
+            document.getElementById('modal').style.display = 'block';
+            document.getElementById('overlay').style.display = 'block';
+        }
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+            document.getElementById('overlay').style.display = 'none';
+        }
+    </script>
 </body>
 </html>
