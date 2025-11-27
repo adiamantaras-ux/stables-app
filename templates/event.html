@@ -43,7 +43,57 @@
         </tr>
         {% endfor %}
     </table>
-
+<style>
+    .grid-container {
+        display: grid;
+        grid-template-columns: repeat(15, 62px);
+        grid-template-rows: 
+            60px    /* 5B */
+            20px    /* κενό */
+            60px    /* 5A */
+            40px    /* κενό */
+            60px    /* 4B */
+            60px    /* 4A */
+            40px    /* κενό */
+            60px    /* 3B */
+            60px    /* 3A */
+            40px    /* κενό */
+            60px    /* 2B */
+            60px    /* 2A */
+            40px    /* κενό */
+            60px    /* 1B */
+            60px;   /* 1A */
+        gap: 6px;
+        justify-content: center;
+        margin: 30px auto;
+        max-width: 1100px;
+    }
+    .stall {
+        background-color: #90ee90;
+        border: 2px solid #006400;
+        border-radius: 10px;
+        text-align: center;
+        font-weight: bold;
+        font-size: 13px;
+        cursor: pointer;
+        padding-top: 18px;
+        position: relative;
+    }
+    .stall.booked {
+        background-color: #ff4444 !important;
+        color: white;
+    }
+    .stall-label {
+        position: absolute;
+        bottom: -24px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 11px;
+        font-weight: bold;
+        color: #000;
+        white-space: nowrap;
+    }
+</style>
     <div class="overlay" id="overlay" onclick="closeModal()"></div>
     <div class="modal" id="modal">
         <h2>Κράτηση: <span id="stall_id"></span></h2>
