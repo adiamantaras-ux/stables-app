@@ -53,7 +53,7 @@ STALL_POSITIONS = {
     "1A1": (13,0), "1A2": (13,1), "1A3": (13,2), "1A4": (13,3), "1A5": (13,4), "1A6": (13,5), "1A7": (13,6), "1A8": (13,7), "1A9": (13,8), "1A10": (13,9), "1A11": (13,10), "1A12": (13,11), "1A13": (13,12), "1A14": (13,13), "1A15": (13,14)
 }
 def get_db():
-    conn = sqlite3.connect(os.environ.get('DATABASE_URL', 'sqlite:////data/stables.db').replace('sqlite:///', ''))
+    conn = sqlite3.connect('stables.db')
     conn.row_factory = sqlite3.Row
     return conn
 
