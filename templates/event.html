@@ -4,13 +4,18 @@
     <title>{{ event_name }}</title>
     <meta charset="utf-8">
     <style>
-        table { border-collapse: collapse; font-family: Arial; margin: 20px; }
-        td { width: 90px; height: 70px; text-align: center; vertical-align: top; font-size: 11px; padding: 5px; border: 1px solid #ccc; }
+        body { font-family: Arial; margin: 20px; background: #f4f4f4; }
+        h1 { text-align: center; }
+        table { border-collapse: separate; border-spacing: 4px; margin: 0 auto; }
+        td { width: 88px; height: 68px; text-align: center; vertical-align: middle; font-size: 11px; border: 2px solid #666; }
         .available { background: #90ee90; cursor: pointer; }
+        .available:hover { background: #70cc70; }
         .reserved { background: #ff4444; color: white; font-weight: bold; }
-        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: white; padding: 30px; border: 4px solid #000; z-index: 100; width: 400px; }
-        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 99; }
-        button { padding: 15px 30px; font-size: 18px; margin: 10px; }
+        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: white; padding: 30px; border: 5px solid #000; z-index: 100; width: 380px; box-shadow: 0 0 20px rgba(0,0,0,0.8); }
+        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 99; }
+        input, button { width: 100%; padding: 12px; margin: 8px 0; font-size: 16px; }
+        button { background: #c00; color: white; border: none; cursor: pointer; }
+        button:hover { background: #a00; }
     </style>
 </head>
 <body>
@@ -21,9 +26,15 @@
             {% for cell in row %}
                 {% if cell %}
                     {% if '<br>' in cell %}
-                        <td class="reserved"><b>{{ cell.split('<br>')[0] }}</b><br><small>{{ cell.split('<br>')[1] }}</small></td>
+                        <td class="reserved">
+                            <b>{{ cell.split('<br>')[0] }}</b><br>
+                            <small>{{ cell.split('<br>')[1] }}</small>
+                        </td>
                     {% else %}
-                        <td class="available" onclick="openModal('{{ cell }}')">{{ cell }}<br><small>Κάνε κλικ<br>για κράτηση</small></td>
+                        <td class="available" onclick="openModal('{{ cell }}')">
+                            <b>{{ cell }}</b><br>
+                            <small>ΚΛΕΙΣΕ</small>
+                        </td>
                     {% endif %}
                 {% else %}
                     <td></td>
@@ -35,31 +46,25 @@
 
     <div class="overlay" id="overlay" onclick="closeModal()"></div>
     <div class="modal" id="modal">
-        <h2>Κράτηση στάβλου: <span id="stall_id"></span></h2>
+        <h2>Κράτηση: <span id="stall_id"></span></h2>
         <form method="post" action="/reserve/{{ event_name }}">
             <input type="hidden" name="stall" id="stall_input">
-            <p>Αθλητής:<br>
-            <input type="text" name="athlete" list="athletes" required style="width:100%;padding:10px;font-size:16px">
-            <datalist id="athletes">{% for a in athletes %}<option value="{{ a }}">{% endfor %}</datalist></p>
-            <p>Άλογο:<br>
-            <input type="text" name="horse" list="horses" required style="width:100%;padding:10px;font-size:16px">
-            <datalist id="horses">{% for h in horses %}<option value="{{ h }}">{% endfor %}</datalist></p>
-            <button type="submit" style="background:#d00;color:white">ΚΛΕΙΣΕ ΤΟΝ ΣΤΑΒΛΟ</button>
+            Αθλητής:<br>
+            <input type="text" name="athlete" list="athletes" required placeholder="π.χ. ΠΑΠΑΔΟΠΟΥΛΟΣ ΑΝΤΩΝΗΣ">
+            <datalist id="athletes">
+                {% for a in athletes %}<option value="{{ a }}">{{% endfor %}
+            </datalist><br><br>
+            Άλογο:<br>
+            <input type="text" name="horse" list="horses" required placeholder="π.χ. ΘΕΤΙΣ">
+            <datalist id="horses">
+                {% for h in horses %}<option value="{{ h }}">{{% endfor %}
+            </datalist><br><br>
+            <button type="submit">ΚΛΕΙΣΕ ΤΟΝ ΣΤΑΒΛΟ</button>
         </form>
-        <button onclick="closeModal()" style="background:#666;color:white">Άκυρο</button>
+        <br>
+        <button onclick="closeModal()" style="background:#666">Άκυρο</button>
     </div>
 
     <script>
         function openModal(stall) {
-            document.getElementById('stall_id').textContent = stall;
-            document.getElementById('stall_input').value = stall;
-            document.getElementById('modal').style.display = 'block';
-            document.getElementById('overlay').style.display = 'block';
-        }
-        function closeModal() {
-            document.getElementById('modal').style.display = 'none';
-            document.getElementById('overlay').style.display = 'none';
-        }
-    </script>
-</body>
-</html>
+            document
