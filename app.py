@@ -81,24 +81,32 @@ def index():
     events = get_db().execute('SELECT name FROM events ORDER BY id DESC').fetchall()
     return render_template('index.html', events=events)
 
-# ΔΗΜΙΟΥΡΓΙΑ ΑΓΩΝΑ – ΔΟΥΛΕΥΕΙ ΚΑΙ ΜΕ GET ΚΑΙ ΜΕ POST!
+# ΔΗΜΙΟΥΡΓΙΑ ΑΓΩΝΑ – ΤΕΛΙΚΗ ΣΩΣΤΗ ΕΚΔΟΣΗ (δουλεύει 100%)
 @app.route('/admin/create_event', methods=['GET', 'POST'])
 def admin_create_event():
     if request.method == 'POST':
         name = request.form.get('event_name', '').strip()
+        name = name.replace(" ", "_").replace("ά","α").replace("έ","ε").replace("ή","η").replace("ί","ι").replace("ό","ο").replace("ύ","υ").replace("ώ","ω")
+        name = "".join(c for c in name if c.isalnum() or c == "_")  # μόνο γράμματα, αριθμοί, _
+        
         password = request.form.get('password', '')
-        if password != ADMIN_PASSWORD:
-            flash('Λάθος password!', 'error')
-            return redirect('/admin/create_event')
+
         if not name:
             flash('Βάλε όνομα αγώνα!', 'error')
             return redirect('/admin/create_event')
+        
+        if password != ADMIN_PASSWORD:
+            flash('Λάθος password!', 'error')
+            return redirect('/admin/create_event')
+
         with get_db() as db:
             db.execute('INSERT OR IGNORE INTO events (name) VALUES (?)', (name,))
             db.commit()
-        return redirect(url_for('event', event_name=name))
-    return render_template('create_event.html')
 
+        return redirect(url_for('event', event_name=name))
+
+    # GET
+    return render_template('create_event.html')
 # Η ΣΕΛΙΔΑ ΤΟΥ ΑΓΩΝΑ
 @app.route('/event/<event_name>')
 def event(event_name):
